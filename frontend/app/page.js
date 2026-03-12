@@ -816,6 +816,14 @@ export default function Page() {
     }
   }, [filteredModelsRegistry, selectedRegistryVersion]);
 
+  useEffect(() => {
+    if (!selectableModelVersions.length) return;
+    const stillValid = selectableModelVersions.some((m) => m.version === selectedRegistryVersion);
+    if (!selectedRegistryVersion || !stillValid) {
+      setSelectedRegistryVersion(selectableModelVersions[0].version);
+    }
+  }, [selectableModelVersions, selectedRegistryVersion]);
+
   return (
     <main className="page">
       <header className="header card">
@@ -982,12 +990,16 @@ export default function Page() {
               )}
             </div>
             {visualizedModel?.metrics ? (
-              <div className="kpis" style={{ marginBottom: 10, gridTemplateColumns: 'repeat(5, minmax(120px, 1fr))' }}>
+              <div className="kpis" style={{ marginBottom: 10, gridTemplateColumns: 'repeat(9, minmax(120px, 1fr))' }}>
                 <div className="kpi"><div className="subtle">Accuracy</div><strong>{((visualizedModel.metrics.accuracy ?? 0) * 100).toFixed(1)}%</strong></div>
                 <div className="kpi"><div className="subtle">Precision</div><strong>{((visualizedModel.metrics.precision ?? 0) * 100).toFixed(1)}%</strong></div>
                 <div className="kpi"><div className="subtle">Recall</div><strong>{((visualizedModel.metrics.recall ?? 0) * 100).toFixed(1)}%</strong></div>
                 <div className="kpi"><div className="subtle">F1</div><strong>{((visualizedModel.metrics.f1 ?? 0) * 100).toFixed(1)}%</strong></div>
                 <div className="kpi"><div className="subtle">ROC AUC</div><strong>{((visualizedModel.metrics.roc_auc ?? 0) * 100).toFixed(1)}%</strong></div>
+                <div className="kpi"><div className="subtle">Error Rate</div><strong>{((visualizedModel.metrics.error_rate ?? 0) * 100).toFixed(1)}%</strong></div>
+                <div className="kpi"><div className="subtle">MAE</div><strong>{visualizedModel.metrics.mae != null ? Number(visualizedModel.metrics.mae).toFixed(3) : '-'}</strong></div>
+                <div className="kpi"><div className="subtle">MSE</div><strong>{visualizedModel.metrics.mse != null ? Number(visualizedModel.metrics.mse).toFixed(3) : '-'}</strong></div>
+                <div className="kpi"><div className="subtle">RMSE</div><strong>{visualizedModel.metrics.rmse != null ? Number(visualizedModel.metrics.rmse).toFixed(3) : '-'}</strong></div>
               </div>
             ) : (
               <div className="subtle" style={{ marginBottom: 10 }}>Aucun modèle sélectionné. Entraîne ou sélectionne une version.</div>
@@ -995,6 +1007,9 @@ export default function Page() {
             <div className="grid">
               <div className="span-6" style={{ minHeight: 270 }}>
                 <label>Matrice de confusion</label>
+                <div className="subtle" style={{ marginBottom: 6 }}>
+                  Basée sur la version de modèle sélectionnée ci-dessus.
+                </div>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={displayedConfusionData}>
                     <CartesianGrid strokeDasharray="3 3" />

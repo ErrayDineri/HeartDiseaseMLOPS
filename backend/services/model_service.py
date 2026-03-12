@@ -1,14 +1,30 @@
+import json
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import joblib
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
+from mlflow.tracking import MlflowClient
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    brier_score_loss,
+    confusion_matrix,
+    f1_score,
+    log_loss,
+    mean_absolute_error,
+    mean_squared_error,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
@@ -16,13 +32,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import SVC
 
-from backend.core.config import (
-    EXPERIMENTS_FILE,
-    MODEL_REGISTRY_FILE,
-    MODELS_DIR,
-    SUPPORTED_ALGORITHMS,
-    ensure_storage_dirs,
-)
+from backend.core.config import ACTIVE_MODEL_FILE, SUPPORTED_ALGORITHMS, ensure_storage_dirs
+from backend.core.mlflow_setup import DEFAULT_EXPERIMENT_NAME, setup_mlflow
 from backend.core.utils import now_ts, read_json, to_python, write_json
 
 try:
@@ -76,22 +87,114 @@ def default_search_space(model_name: str) -> Dict[str, Any]:
 class ModelService:
     def __init__(self) -> None:
         ensure_storage_dirs()
-        if not MODEL_REGISTRY_FILE.exists():
-            write_json(MODEL_REGISTRY_FILE, [])
-        if not EXPERIMENTS_FILE.exists():
-            write_json(EXPERIMENTS_FILE, [])
+        self.experiment_name = DEFAULT_EXPERIMENT_NAME
+        self.experiment_id = setup_mlflow(self.experiment_name)
+        self.client = MlflowClient()
+        if not ACTIVE_MODEL_FILE.exists():
+            write_json(ACTIVE_MODEL_FILE, {'active_model_version': None})
+
+    def _set_active_model(self, model_version: str | None) -> None:
+        write_json(ACTIVE_MODEL_FILE, {'active_model_version': model_version})
+
+    def _get_active_model(self) -> str | None:
+        payload = read_json(ACTIVE_MODEL_FILE, {'active_model_version': None})
+        return payload.get('active_model_version')
+
+    def _run_model_filter(self) -> str:
+        return "tags.model_name != ''"
+
+    def _list_model_runs(self):
+        return self.client.search_runs(
+            experiment_ids=[self.experiment_id],
+            filter_string=self._run_model_filter(),
+            max_results=5000,
+            order_by=['attributes.start_time DESC'],
+        )
+
+    def _load_json_artifact(self, run_id: str, artifact_path: str) -> Dict[str, Any]:
+        try:
+            local_path = mlflow.artifacts.download_artifacts(artifact_uri=f'runs:/{run_id}/{artifact_path}')
+            content = Path(local_path).read_text(encoding='utf-8')
+            return json.loads(content)
+        except Exception:
+            return {}
+
+    def _run_to_model_entry(self, run) -> Dict[str, Any]:
+        run_id = run.info.run_id
+        tags = run.data.tags or {}
+        params = run.data.params or {}
+        metrics_base = run.data.metrics or {}
+
+        artifact_metrics = self._load_json_artifact(run_id, 'metadata/metrics.json')
+        metrics = artifact_metrics if artifact_metrics else metrics_base
+
+        hyperparameters = self._load_json_artifact(run_id, 'metadata/hyperparameters.json')
+        if not hyperparameters:
+            hyperparameters = {k.replace('hp_', ''): v for k, v in params.items() if k.startswith('hp_')}
+
+        return {
+            'version': run_id,
+            'algorithm': tags.get('model_name', 'unknown'),
+            'dataset_version': tags.get('dataset_version', 'unknown'),
+            'metrics': to_python(metrics),
+            'hyperparameters': to_python(hyperparameters),
+            'file_path': f'runs:/{run_id}/model',
+            'created_at': str(run.info.start_time or ''),
+            'experiment_id': tags.get('session_id', run_id),
+            'is_active': run_id == self._get_active_model(),
+        }
 
     def list_models(self) -> List[Dict[str, Any]]:
-        return read_json(MODEL_REGISTRY_FILE, [])
+        runs = self._list_model_runs()
+        return [self._run_to_model_entry(r) for r in runs]
 
     def list_experiments(self) -> List[Dict[str, Any]]:
-        return read_json(EXPERIMENTS_FILE, [])
+        runs = self._list_model_runs()
+        grouped: Dict[str, Dict[str, Any]] = {}
 
-    def _save_model_registry(self, data: List[Dict[str, Any]]) -> None:
-        write_json(MODEL_REGISTRY_FILE, data)
+        for run in runs:
+            tags = run.data.tags or {}
+            model_entry = self._run_to_model_entry(run)
+            session_id = tags.get('session_id', run.info.run_id)
+            optimize_metric = tags.get('optimize_metric', 'f1')
 
-    def _save_experiments(self, data: List[Dict[str, Any]]) -> None:
-        write_json(EXPERIMENTS_FILE, data)
+            bucket = grouped.setdefault(
+                session_id,
+                {
+                    'id': session_id,
+                    'dataset_version': tags.get('dataset_version', 'unknown'),
+                    'target_column': tags.get('target_column', 'target'),
+                    'models': [],
+                    'results': [],
+                    'optimize_metric': optimize_metric,
+                    'created_at': str(run.info.start_time or ''),
+                    'source': tags.get('source', 'train'),
+                },
+            )
+
+            bucket['models'].append(model_entry['algorithm'])
+            bucket['results'].append(
+                {
+                    'model': model_entry['algorithm'],
+                    'model_version': model_entry['version'],
+                    'metrics': model_entry['metrics'],
+                    'hyperparameters': model_entry['hyperparameters'],
+                }
+            )
+
+            if str(run.info.start_time or '') < bucket['created_at']:
+                bucket['created_at'] = str(run.info.start_time or '')
+
+        experiments = []
+        for exp in grouped.values():
+            metric_name = exp['optimize_metric']
+            best = max(exp['results'], key=lambda item: item['metrics'].get(metric_name) or -1)
+            exp['best_model'] = best
+            exp['models'] = list(dict.fromkeys(exp['models']))
+            experiments.append(exp)
+
+        experiments.sort(key=lambda e: e['created_at'], reverse=True)
+        return experiments
 
     def _build_estimator(self, model_name: str, params: Dict[str, Any]):
         if model_name == 'svm':
@@ -234,28 +337,45 @@ class ModelService:
             'roc_auc': roc_auc,
             'confusion_matrix': cm.tolist(),
             'labels': to_python(class_labels) if class_labels is not None else to_python(labels),
+            'error_rate': 1 - accuracy_score(y_true, y_pred),
+            'mae': None,
+            'mse': None,
+            'rmse': None,
+            'log_loss': None,
+            'brier_score': None,
         }
+
+        try:
+            label_to_index = {label: idx for idx, label in enumerate(labels)}
+            y_true_idx = np.array([label_to_index[v] for v in y_true])
+            y_pred_idx = np.array([label_to_index[v] for v in y_pred])
+
+            mse_value = mean_squared_error(y_true_idx, y_pred_idx)
+            payload['mae'] = mean_absolute_error(y_true_idx, y_pred_idx)
+            payload['mse'] = mse_value
+            payload['rmse'] = float(np.sqrt(mse_value))
+
+            if y_prob is not None:
+                proba_labels = to_python(class_labels) if class_labels is not None else to_python(labels)
+                payload['log_loss'] = log_loss(y_true, y_prob, labels=proba_labels)
+
+                if len(labels) == 2:
+                    if y_prob.ndim == 2 and y_prob.shape[1] >= 2:
+                        positive_proba = y_prob[:, 1]
+                    else:
+                        positive_proba = y_prob
+                    payload['brier_score'] = brier_score_loss(y_true_idx, positive_proba)
+        except Exception:
+            pass
+
         return to_python(payload)
 
     def _delete_model_versions(self, versions: List[str]) -> None:
-        if not versions:
-            return
-        to_remove = set(versions)
-        registry = self.list_models()
-        kept = []
-
-        for item in registry:
-            if item.get('version') in to_remove:
-                path = Path(item.get('file_path', ''))
-                if path.exists() and path.is_file():
-                    path.unlink(missing_ok=True)
-            else:
-                kept.append(item)
-
-        if kept and not any(entry.get('is_active') for entry in kept):
-            kept[-1]['is_active'] = True
-
-        self._save_model_registry(kept)
+        for version in versions:
+            if version:
+                self.client.delete_run(version)
+                if self._get_active_model() == version:
+                    self._set_active_model(None)
 
     def _register_model(
         self,
@@ -265,29 +385,59 @@ class ModelService:
         metrics: Dict[str, Any],
         hyperparameters: Dict[str, Any],
         experiment_id: str,
+        target_column: str,
+        optimize_metric: str,
+        source: str,
     ) -> Dict[str, Any]:
-        version = f"{model_name}_{now_ts()}"
-        path = MODELS_DIR / f'{version}.joblib'
-        joblib.dump(pipeline, path)
+        run = mlflow.active_run()
+        if run is None:
+            raise RuntimeError('No active MLflow run found while registering model.')
 
-        registry = self.list_models()
-        for item in registry:
-            item['is_active'] = False
+        run_id = run.info.run_id
 
-        entry = {
-            'version': version,
+        mlflow.set_tags(
+            {
+                'app': 'heart_disease_ml_studio',
+                'model_name': model_name,
+                'dataset_version': dataset_version,
+                'target_column': target_column,
+                'session_id': experiment_id,
+                'optimize_metric': optimize_metric,
+                'source': source,
+            }
+        )
+
+        if hyperparameters:
+            mlflow.log_params({f'hp_{k}': str(v) for k, v in hyperparameters.items()})
+
+        for metric_name in ['accuracy', 'precision', 'recall', 'f1', 'roc_auc']:
+            metric_value = metrics.get(metric_name)
+            if metric_value is not None:
+                mlflow.log_metric(metric_name, float(metric_value))
+
+        mlflow.log_text(json.dumps(to_python(metrics), indent=2, ensure_ascii=False), 'metadata/metrics.json')
+        mlflow.log_text(json.dumps(to_python(hyperparameters), indent=2, ensure_ascii=False), 'metadata/hyperparameters.json')
+
+        mlflow.sklearn.log_model(pipeline, name='model')
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            export_path = Path(tmp_dir) / 'model.joblib'
+            joblib.dump(pipeline, export_path)
+            mlflow.log_artifact(str(export_path), artifact_path='export')
+
+        self._set_active_model(run_id)
+
+        return {
+            'version': run_id,
             'algorithm': model_name,
             'dataset_version': dataset_version,
             'metrics': metrics,
             'hyperparameters': hyperparameters,
-            'file_path': str(path),
+            'file_path': f'runs:/{run_id}/model',
             'created_at': now_ts(),
             'experiment_id': experiment_id,
             'is_active': True,
         }
-        registry.append(entry)
-        self._save_model_registry(registry)
-        return entry
 
     def train(self, df: pd.DataFrame, payload: Dict[str, Any]) -> Dict[str, Any]:
         models = [normalize_model_name(m) for m in payload['models']]
@@ -311,8 +461,8 @@ class ModelService:
         if X_train.empty or X_test.empty:
             raise ValueError('Train/test split failed: empty train or test set.')
 
-        persist_experiment = payload.get('persist_experiment', True)
         experiment_id = payload.get('experiment_id_override') or f"exp_{now_ts()}"
+        source = payload.get('source', 'train')
         model_results = []
         optimize_metric = payload.get('optimize_metric', 'f1')
 
@@ -330,14 +480,20 @@ class ModelService:
                 class_labels = getattr(pipeline.named_steps.get('estimator'), 'classes_', None)
 
             metrics = self._metrics(y_test.values, y_pred, y_prob, class_labels)
-            registered = self._register_model(
-                model_name=model_name,
-                pipeline=pipeline,
-                dataset_version=payload['dataset_version'],
-                metrics=metrics,
-                hyperparameters=hp,
-                experiment_id=experiment_id,
-            )
+
+            with mlflow.start_run(run_name=f'{source}_{model_name}'):
+                registered = self._register_model(
+                    model_name=model_name,
+                    pipeline=pipeline,
+                    dataset_version=payload['dataset_version'],
+                    metrics=metrics,
+                    hyperparameters=hp,
+                    experiment_id=experiment_id,
+                    target_column=payload['target_column'],
+                    optimize_metric=optimize_metric,
+                    source=source,
+                )
+
             model_results.append(
                 {
                     'model': model_name,
@@ -348,22 +504,7 @@ class ModelService:
             )
 
         best = max(model_results, key=lambda item: item['metrics'].get(optimize_metric) or -1)
-
-        if persist_experiment:
-            experiments = self.list_experiments()
-            experiments.append(
-                {
-                    'id': experiment_id,
-                    'dataset_version': payload['dataset_version'],
-                    'target_column': payload['target_column'],
-                    'models': [r['model'] for r in model_results],
-                    'results': model_results,
-                    'best_model': best,
-                    'optimize_metric': optimize_metric,
-                    'created_at': now_ts(),
-                }
-            )
-            self._save_experiments(experiments)
+        self._set_active_model(best['model_version'])
 
         return {
             'experiment_id': experiment_id,
@@ -517,8 +658,8 @@ class ModelService:
                 'selected_classes': None,
                 'hyperparameters': {model_name: hp},
                 'optimize_metric': optimize_metric,
-                'persist_experiment': False,
                 'experiment_id_override': automl_experiment_id,
+                'source': 'automl',
             }
             trained = self.train(df_prepared, train_payload)
             result = trained['best_model']
@@ -530,22 +671,7 @@ class ModelService:
         keep_version = best.get('model_version')
         to_delete = [r.get('model_version') for r in leaderboard if r.get('model_version') and r.get('model_version') != keep_version]
         self._delete_model_versions(to_delete)
-
-        experiments = self.list_experiments()
-        experiments.append(
-            {
-                'id': automl_experiment_id,
-                'dataset_version': payload['dataset_version'],
-                'target_column': target_column,
-                'models': [r['model'] for r in leaderboard],
-                'results': leaderboard,
-                'best_model': best,
-                'optimize_metric': optimize_metric,
-                'created_at': now_ts(),
-                'source': 'automl',
-            }
-        )
-        self._save_experiments(experiments)
+        self._set_active_model(keep_version)
 
         return {
             'experiment_id': automl_experiment_id,
@@ -555,32 +681,27 @@ class ModelService:
         }
 
     def rollback(self, model_version: str) -> Dict[str, Any]:
-        registry = self.list_models()
-        found = None
-        for item in registry:
-            if item['version'] == model_version:
-                found = item
-                item['is_active'] = True
-            else:
-                item['is_active'] = False
-        if found is None:
+        run = self.client.get_run(model_version)
+        tags = run.data.tags or {}
+        if not tags.get('model_name'):
             raise ValueError(f'Model version not found: {model_version}')
-        self._save_model_registry(registry)
-        return found
+
+        self._set_active_model(model_version)
+        return self._run_to_model_entry(run)
 
     def get_model_path(self, model_version: str) -> Path:
-        registry = self.list_models()
-        for item in registry:
-            if item['version'] == model_version:
-                path = Path(item['file_path'])
-                if not path.exists():
-                    raise FileNotFoundError(f'Model file missing: {path}')
-                return path
-        raise ValueError(f'Model version not found: {model_version}')
+        try:
+            local_path = mlflow.artifacts.download_artifacts(artifact_uri=f'runs:/{model_version}/export/model.joblib')
+            path = Path(local_path)
+            if not path.exists() or not path.is_file():
+                raise FileNotFoundError(f'Model file missing for run {model_version}')
+            return path
+        except Exception as exc:
+            raise FileNotFoundError(f'Unable to download model artifact for version {model_version}: {exc}')
 
     def predict(self, model_version: str, records: List[Dict[str, Any]]) -> Dict[str, Any]:
-        model_path = self.get_model_path(model_version)
-        pipeline = joblib.load(model_path)
+        model_uri = f'runs:/{model_version}/model'
+        pipeline = mlflow.sklearn.load_model(model_uri)
         X = pd.DataFrame(records)
         pred = pipeline.predict(X)
         proba = pipeline.predict_proba(X) if hasattr(pipeline, 'predict_proba') else None
@@ -598,17 +719,16 @@ class ModelService:
         }
 
     def reset_models_and_experiments(self) -> Dict[str, Any]:
-        removed_model_files = 0
-        for path in MODELS_DIR.glob('*'):
-            if path.is_file():
-                path.unlink(missing_ok=True)
-                removed_model_files += 1
+        runs = self._list_model_runs()
+        deleted = 0
+        for run in runs:
+            self.client.delete_run(run.info.run_id)
+            deleted += 1
 
-        self._save_model_registry([])
-        self._save_experiments([])
+        self._set_active_model(None)
 
         return {
-            'removed_model_files': removed_model_files,
+            'removed_model_files': deleted,
             'model_registry_entries': len(self.list_models()),
             'experiment_entries': len(self.list_experiments()),
         }

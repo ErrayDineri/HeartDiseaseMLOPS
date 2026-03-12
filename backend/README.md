@@ -1,39 +1,36 @@
-# Backend FastAPI - Heart Disease ML API
+# Backend - Heart Disease ML API
 
-API complète pour:
+FastAPI backend for:
+- Dataset management (upload, preview, cleaning, versioning)
+- Multi-model training (SVM, RF, KNN, Logistic Regression, NN)
+- Hyperparameter tuning (GridSearch, RandomSearch, Optuna)
+- AutoML and best model selection
+- MLOps tracking (experiments, model versions, rollback)
 
-- gestion des datasets (versions, upload, preview, nettoyage)
-- entraînement multi-modèles (SVM, Random Forest, KNN, Logistic Regression, Neural Network)
-- tuning (GridSearch, RandomSearch, Optuna)
-- AutoML (benchmark + sélection meilleur modèle)
-- suivi MLOps (historique expérimentations, versions modèles, rollback)
-- export/download de modèles et endpoint de prédiction
-
-## Lancement
-
+## Setup
 ```bash
 pip install -r requirements.txt
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## Documentation interactive
+## Key Endpoints
+- `GET /health`: Health check
+- `POST /train`: Train a model
+- `POST /tune`: Hyperparameter tuning
+- `POST /automl`: AutoML benchmarking
+- `GET /experiments`: List experiments
+- `GET /models`: List models
 
-- Swagger: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+## MLflow Integration
+- Tracking URI: SQLite database
+- Artifact storage: Local directory
+- Default experiment: `ML_Avance`
 
-## Endpoints principaux
+### Start MLflow UI
+Run from the project root:
 
-- `GET /health`
-- `GET /algorithms`
-- `GET /datasets`
-- `POST /datasets/upload`
-- `GET /datasets/{version}/preview`
-- `POST /datasets/clean`
-- `POST /train`
-- `POST /tune`
-- `POST /automl`
-- `GET /experiments`
-- `GET /models`
-- `POST /models/{model_version}/rollback`
-- `GET /models/{model_version}/download`
-- `POST /models/{model_version}/predict`
+```bash
+python -m mlflow ui --backend-store-uri sqlite:///backend/mlflow.db --host 127.0.0.1 --port 5000
+```
+
+Then open `http://127.0.0.1:5000`.
