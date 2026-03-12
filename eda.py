@@ -1,7 +1,10 @@
+"""Exécute une EDA rapide: résumé texte + graphiques standards."""
+
 import sys
 import subprocess
 
 def ensure(pkg):
+    """Installe un package à la volée s'il est manquant."""
     try:
         __import__(pkg)
     except ImportError:
@@ -17,6 +20,7 @@ import seaborn as sns
 import numpy as np
 
 def main():
+    """Génère les artefacts EDA utilisés dans la documentation du projet."""
     df = pd.read_csv('data.csv')
 
     out_lines = []
@@ -31,7 +35,7 @@ def main():
     out_lines.append('\n\nDescribe:')
     out_lines.append(df.describe(include='all').to_string())
 
-    # If there's a `target` column, show distribution
+    # Si la cible existe, inclure l'équilibre des classes.
     if 'target' in df.columns:
         out_lines.append('\n\nTarget distribution:')
         out_lines.append(df['target'].value_counts().to_string())
@@ -42,16 +46,16 @@ def main():
 
     print(summary_text)
 
-    # Basic visualizations
+    # Génère des visualisations numériques standard.
     numeric = df.select_dtypes(include=[np.number]).columns.tolist()
     if numeric:
-        # histograms
+        # Histogrammes pour chaque variable numérique.
         df[numeric].hist(bins=15, figsize=(12, 8))
         plt.tight_layout()
         plt.savefig('histograms.png')
         plt.clf()
 
-        # correlation heatmap
+        # Carte de corrélation pour repérer les variables redondantes.
         corr = df[numeric].corr()
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm')
@@ -60,7 +64,7 @@ def main():
         plt.savefig('correlation_heatmap.png')
         plt.clf()
 
-        # pairplot for small number of numeric columns
+        # Pairplot sur un sous-ensemble pour limiter le temps d'exécution.
         try:
             small = numeric[:6]
             sns.pairplot(df[small].dropna())
@@ -69,7 +73,7 @@ def main():
         except Exception:
             pass
 
-    # Simple bar plots for categorical-ish columns
+    # Countplots pour les colonnes non numériques de faible cardinalité.
     categorical = [c for c in df.columns if df[c].nunique() <= 10 and c not in numeric]
     for c in categorical:
         plt.figure(figsize=(6,4))

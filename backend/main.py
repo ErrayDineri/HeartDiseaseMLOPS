@@ -1,3 +1,5 @@
+"""Point d'entrée FastAPI exposant les routes data, entraînement, MLOps et admin."""
+
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -24,6 +26,7 @@ data_service = DataService()
 model_service = ModelService()
 
 
+# Routes de santé et de catalogue.
 @app.get('/health')
 def health():
     return {'status': 'ok'}
@@ -48,6 +51,7 @@ def list_datasets():
     return {'datasets': data_service.list_datasets(), 'active': data_service.get_active_dataset_version()}
 
 
+# Routes de gestion des jeux de données.
 @app.post('/datasets/upload')
 async def upload_dataset(file: UploadFile = File(...)):
     try:
@@ -88,6 +92,7 @@ def clean_dataset(payload: CleanDatasetRequest):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+# Routes d'entraînement et d'optimisation d'hyperparamètres.
 @app.post('/train')
 def train_models(payload: TrainRequest):
     try:
@@ -116,6 +121,7 @@ def run_automl(payload: AutoMLRequest):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+# Routes de registre et de consultation des expériences.
 @app.get('/experiments')
 def experiments():
     items = model_service.list_experiments()
@@ -153,6 +159,7 @@ def predict(model_version: str, payload: PredictRequest):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+# Route de maintenance administrateur.
 @app.post('/admin/reset')
 def admin_reset(payload: ResetAllRequest):
     try:

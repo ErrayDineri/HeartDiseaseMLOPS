@@ -1,3 +1,5 @@
+"""Chemins backend centralisés et constantes statiques du projet."""
+
 from pathlib import Path
 
 
@@ -26,6 +28,7 @@ SUPPORTED_ALGORITHMS = [
 
 
 def ensure_storage_dirs() -> None:
+    """Garantit l'existence des dossiers de stockage avant les E/S."""
     DATASETS_DIR.mkdir(parents=True, exist_ok=True)
     REGISTRY_DIR.mkdir(parents=True, exist_ok=True)
     MLFLOW_ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)

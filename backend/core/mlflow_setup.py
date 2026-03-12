@@ -1,3 +1,5 @@
+"""Utilitaires d'initialisation MLflow (URI de suivi + initialisation d'expérience)."""
+
 import mlflow
 from mlflow.tracking import MlflowClient
 
@@ -9,6 +11,7 @@ DEFAULT_EXPERIMENT_NAME = 'ML_Avance'
 
 
 def setup_mlflow(experiment_name: str = DEFAULT_EXPERIMENT_NAME) -> str:
+    """Configure le tracking MLflow et crée l'expérience si nécessaire."""
     ensure_storage_dirs()
     MLFLOW_ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 

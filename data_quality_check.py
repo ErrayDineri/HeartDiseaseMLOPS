@@ -1,3 +1,5 @@
+"""Génère un rapport léger de qualité des données depuis data.csv."""
+
 import json
 from pathlib import Path
 
@@ -5,12 +7,14 @@ import pandas as pd
 
 
 def main():
+    """Calcule les indicateurs qualité et exporte les rapports JSON/Markdown."""
     csv_path = Path('data.csv')
     if not csv_path.exists():
         raise FileNotFoundError('data.csv introuvable')
 
     df = pd.read_csv(csv_path)
 
+    # Rassemble les diagnostics clés utilisés dans le rapport du projet.
     report = {
         'shape': {'rows': int(df.shape[0]), 'cols': int(df.shape[1])},
         'columns': df.columns.tolist(),
@@ -23,6 +27,7 @@ def main():
     output_json = Path('data_quality_report.json')
     output_json.write_text(json.dumps(report, indent=2), encoding='utf-8')
 
+    # Construit un résumé Markdown court et lisible.
     md = []
     md.append('# Data Quality Report')
     md.append('')

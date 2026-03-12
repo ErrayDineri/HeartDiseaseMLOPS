@@ -18,8 +18,10 @@ import {
   YAxis
 } from 'recharts';
 
+// URL de base du backend utilisée par tous les appels API.
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 
+// Mapping entre les clés UI des modèles et les identifiants backend.
 const MODEL_KEY_TO_BACKEND = {
   svm: 'svm',
   rf: 'random_forest',
@@ -32,6 +34,7 @@ const BACKEND_TO_MODEL_KEY = Object.fromEntries(
   Object.entries(MODEL_KEY_TO_BACKEND).map(([k, v]) => [v, k])
 );
 
+// Libellés et descriptions courtes affichés dans le sélecteur d'algorithmes.
 const ALGORITHMS = [
   { key: 'svm', label: 'SVM', doc: 'Bon pour des frontières complexes, nécessite un tuning de C et gamma.' },
   { key: 'rf', label: 'Random Forest', doc: 'Ensemble d’arbres robuste, performant avec peu de prétraitement.' },
@@ -50,6 +53,7 @@ const DEFAULT_PARAMS = {
 
 const EMPTY_METRICS = { accuracy: 0, f1: 0, auc: 0 };
 
+// Lignes d'aperçu de secours avant le chargement des données API.
 const SAMPLE_DATA = [
   { age: 52, sex: 1, cp: 0, trestbps: 125, chol: 212, target: 0 },
   { age: 53, sex: 1, cp: 0, trestbps: 140, chol: 203, target: 0 },
@@ -66,12 +70,14 @@ const DEFAULT_CM = [
 ];
 
 function toCsv(rows) {
+  // Convertit un tableau d'objets en chaîne CSV simple.
   if (!rows.length) return '';
   const cols = Object.keys(rows[0]);
   return `${cols.join(',')}\n${rows.map((r) => cols.map((c) => r[c]).join(',')).join('\n')}`;
 }
 
 function downloadFile(filename, content, type = 'text/plain') {
+  // Déclenche un téléchargement côté client sans aller-retour serveur.
   const blob = new Blob([content], { type });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -81,6 +87,7 @@ function downloadFile(filename, content, type = 'text/plain') {
 }
 
 function safeJson(value) {
+  // Rend l'UI robuste lors de la sérialisation de payloads dynamiques.
   try {
     return JSON.stringify(value ?? {}, null, 2);
   } catch {
@@ -93,18 +100,21 @@ function modelLabelFromKey(key) {
 }
 
 function toPositiveNumber(value, fallback, min = 0.0001) {
+  // Sécurise les entrées numériques envoyées en hyperparamètres backend.
   const num = Number(value);
   if (Number.isNaN(num) || num < min) return fallback;
   return num;
 }
 
 function toPositiveInt(value, fallback, min = 1) {
+  // Sécurise les entrées entières envoyées en hyperparamètres backend.
   const num = Math.round(Number(value));
   if (Number.isNaN(num) || num < min) return fallback;
   return num;
 }
 
 export default function Page() {
+  // État de navigation UI et de sélection des modèles.
   const [activeTab, setActiveTab] = useState('training');
   const [selectedModels, setSelectedModels] = useState(['svm', 'rf']);
   const [trainMode, setTrainMode] = useState('scratch');
@@ -114,14 +124,17 @@ export default function Page() {
   const [savedConfigs, setSavedConfigs] = useState([]);
   const [lastTuningResult, setLastTuningResult] = useState(null);
 
+  // État d'exécution et retour de progression.
   const [status, setStatus] = useState('Initialisation...');
   const [progress, setProgress] = useState(0);
 
+  // État de sélection/filtrage du dataset.
   const [datasetRows, setDatasetRows] = useState(SAMPLE_DATA);
   const [selectedColumns, setSelectedColumns] = useState(Object.keys(SAMPLE_DATA[0]));
   const [selectedClasses, setSelectedClasses] = useState(['0', '1']);
   const [datasetVersion, setDatasetVersion] = useState('heart_v1');
 
+  // État registre MLOps, expériences et visualisation.
   const [modelVersion, setModelVersion] = useState('n/a');
   const [modelsRegistry, setModelsRegistry] = useState([]);
   const [experiments, setExperiments] = useState([]);
@@ -135,6 +148,7 @@ export default function Page() {
   const [predictionInput, setPredictionInput] = useState('');
   const [predictionOutput, setPredictionOutput] = useState(null);
 
+  // Aides UI (panneau tutoriel + référence export des graphiques).
   const [tutorialOpen, setTutorialOpen] = useState(true);
   const chartsRef = useRef(null);
 
@@ -222,6 +236,7 @@ export default function Page() {
   }, [visualizedModel, confusionData]);
 
   async function api(path, options = {}) {
+    // Wrapper API unifié avec une surface d'erreur cohérente.
     const response = await fetch(`${API_BASE}${path}`, options);
     if (!response.ok) {
       const details = await response.json().catch(() => ({}));
@@ -231,6 +246,7 @@ export default function Page() {
   }
 
   function toggleModel(key) {
+    // Garde au moins un modèle sélectionné pour éviter un payload vide.
     setSelectedModels((prev) => {
       if (prev.includes(key)) {
         if (prev.length === 1) return prev;
@@ -241,10 +257,12 @@ export default function Page() {
   }
 
   function updateParam(modelKey, key, value) {
+    // Met à jour un champ d'hyperparamètre dans l'état local UI.
     setParams((prev) => ({ ...prev, [modelKey]: { ...prev[modelKey], [key]: value } }));
   }
 
   function applyTuningToUiParams(modelKey, bestParams) {
+    // Convertit les clés backend de tuning vers la structure UI.
     const clean = Object.fromEntries(
       Object.entries(bestParams || {}).map(([k, v]) => [k.replace('estimator__', ''), v])
     );
@@ -307,6 +325,7 @@ export default function Page() {
   }
 
   function uiParamsToBackend() {
+    // Construit un payload d'hyperparamètres backend à partir des contrôles UI.
     const mapped = {};
     if (selectedModels.includes('svm')) {
       const gammaRaw = params.svm.gamma;

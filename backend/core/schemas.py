@@ -1,9 +1,12 @@
+"""Schémas Pydantic utilisés par les routes FastAPI."""
+
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
 
 class DatasetPreviewRequest(BaseModel):
+    """Modèle de requête pour filtrer l'aperçu d'un dataset."""
     version: str
     limit: int = 10
     selected_columns: Optional[List[str]] = None
@@ -12,11 +15,13 @@ class DatasetPreviewRequest(BaseModel):
 
 
 class CleanDatasetRequest(BaseModel):
+    """Modèle de requête pour nettoyer les valeurs manquantes d'une version."""
     version: str
     strategy: Literal['dropna', 'none'] = 'dropna'
 
 
 class TrainRequest(BaseModel):
+    """Modèle de requête pour entraîner un ou plusieurs algorithmes."""
     dataset_version: str = 'heart_v1'
     models: List[str] = Field(default_factory=lambda: ['svm', 'random_forest'])
     target_column: str = 'target'
@@ -31,6 +36,7 @@ class TrainRequest(BaseModel):
 
 
 class TuneRequest(BaseModel):
+    """Modèle de requête pour le tuning d'hyperparamètres d'un algorithme."""
     dataset_version: str = 'heart_v1'
     model: str
     target_column: str = 'target'
@@ -48,6 +54,7 @@ class TuneRequest(BaseModel):
 
 
 class AutoMLRequest(BaseModel):
+    """Modèle de requête pour benchmark multi-modèles rapide + sélection."""
     dataset_version: str = 'heart_v1'
     target_column: str = 'target'
     candidate_models: Optional[List[str]] = None
@@ -62,8 +69,10 @@ class AutoMLRequest(BaseModel):
 
 
 class PredictRequest(BaseModel):
+    """Modèle de requête contenant les enregistrements à inférer."""
     records: List[Dict[str, Any]]
 
 
 class ResetAllRequest(BaseModel):
+    """Modèle de requête pour la réinitialisation admin datasets/modèles."""
     keep_default_dataset: bool = True

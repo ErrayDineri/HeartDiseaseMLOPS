@@ -1,3 +1,5 @@
+"""Service du cycle de vie des modèles: entraînement, optimisation, AutoML, registre et inférence."""
+
 import json
 import tempfile
 from pathlib import Path
@@ -58,6 +60,7 @@ ALIAS = {
 
 
 def normalize_model_name(name: str) -> str:
+    """Normalise les alias interface vers les identifiants de modèles supportés."""
     key = name.strip().lower().replace(' ', '_')
     normalized = ALIAS.get(key, key)
     if normalized not in SUPPORTED_ALGORITHMS:
@@ -66,6 +69,7 @@ def normalize_model_name(name: str) -> str:
 
 
 def default_search_space(model_name: str) -> Dict[str, Any]:
+    """Retourne un espace d'hyperparamètres par défaut, pragmatique par modèle."""
     if model_name == 'svm':
         return {'estimator__C': [0.1, 1, 10], 'estimator__gamma': ['scale', 0.1, 0.01], 'estimator__kernel': ['rbf', 'linear']}
     if model_name == 'random_forest':
@@ -86,6 +90,7 @@ def default_search_space(model_name: str) -> Dict[str, Any]:
 
 class ModelService:
     def __init__(self) -> None:
+        """Initialise le client MLflow et le fichier de modèle actif."""
         ensure_storage_dirs()
         self.experiment_name = DEFAULT_EXPERIMENT_NAME
         self.experiment_id = setup_mlflow(self.experiment_name)
@@ -94,16 +99,20 @@ class ModelService:
             write_json(ACTIVE_MODEL_FILE, {'active_model_version': None})
 
     def _set_active_model(self, model_version: str | None) -> None:
+        """Persiste la version du modèle actuellement actif."""
         write_json(ACTIVE_MODEL_FILE, {'active_model_version': model_version})
 
     def _get_active_model(self) -> str | None:
+        """Lit la version du modèle actuellement actif."""
         payload = read_json(ACTIVE_MODEL_FILE, {'active_model_version': None})
         return payload.get('active_model_version')
 
     def _run_model_filter(self) -> str:
+        """Filtre MLflow pour ne conserver que les exécutions de modèles."""
         return "tags.model_name != ''"
 
     def _list_model_runs(self):
+        """Récupère les exécutions de modèles depuis MLflow, du plus récent au plus ancien."""
         return self.client.search_runs(
             experiment_ids=[self.experiment_id],
             filter_string=self._run_model_filter(),
@@ -112,6 +121,7 @@ class ModelService:
         )
 
     def _load_json_artifact(self, run_id: str, artifact_path: str) -> Dict[str, Any]:
+        """Charge un artefact JSON d'une exécution; renvoie {{}} en cas d'échec."""
         try:
             local_path = mlflow.artifacts.download_artifacts(artifact_uri=f'runs:/{run_id}/{artifact_path}')
             content = Path(local_path).read_text(encoding='utf-8')
@@ -120,6 +130,7 @@ class ModelService:
             return {}
 
     def _run_to_model_entry(self, run) -> Dict[str, Any]:
+        """Convertit un objet d'exécution MLflow en charge utile registre compatible API."""
         run_id = run.info.run_id
         tags = run.data.tags or {}
         params = run.data.params or {}
@@ -145,10 +156,12 @@ class ModelService:
         }
 
     def list_models(self) -> List[Dict[str, Any]]:
+        """Liste toutes les versions de modèles suivies."""
         runs = self._list_model_runs()
         return [self._run_to_model_entry(r) for r in runs]
 
     def list_experiments(self) -> List[Dict[str, Any]]:
+        """Groupe les exécutions par session/expérience pour l'historique interface."""
         runs = self._list_model_runs()
         grouped: Dict[str, Dict[str, Any]] = {}
 
@@ -197,6 +210,7 @@ class ModelService:
         return experiments
 
     def _build_estimator(self, model_name: str, params: Dict[str, Any]):
+        """Instancie un estimateur sklearn avec paramètres par défaut + surcharges."""
         if model_name == 'svm':
             defaults = {'C': 1.0, 'gamma': 'scale', 'kernel': 'rbf', 'probability': True, 'random_state': 42}
             defaults.update(params)
@@ -226,6 +240,7 @@ class ModelService:
         raise ValueError(f'Unsupported model: {model_name}')
 
     def _build_pipeline(self, estimator, X: pd.DataFrame) -> Pipeline:
+        """Construit le pipeline prétraitement + estimateur depuis le schéma de X."""
         numeric_features = X.select_dtypes(include=['number']).columns.tolist()
         categorical_features = [c for c in X.columns if c not in numeric_features]
 
@@ -261,6 +276,7 @@ class ModelService:
         clean_missing: str,
         drop_duplicates: bool,
     ) -> Tuple[pd.DataFrame, pd.Series]:
+        """Applique filtres/nettoyage et sépare le dataframe en X/y."""
         if target_column not in df.columns:
             raise ValueError(f'Target column not found: {target_column}')
 
@@ -296,6 +312,7 @@ class ModelService:
         return X, y
 
     def _resolve_scoring(self, scoring: str, y: pd.Series) -> str:
+        """Adapte le nom de scoring pour les cibles multiclasse si nécessaire."""
         if y.nunique() <= 2:
             return scoring
         mapping = {
@@ -312,6 +329,7 @@ class ModelService:
         y_prob: np.ndarray | None,
         class_labels: np.ndarray | None = None,
     ) -> Dict[str, Any]:
+        """Calcule les métriques de classification utilisées par API, interface et rapports."""
         labels = np.unique(y_true)
         average = 'binary' if len(labels) == 2 else 'macro'
         cm = confusion_matrix(y_true, y_pred)
@@ -371,6 +389,7 @@ class ModelService:
         return to_python(payload)
 
     def _delete_model_versions(self, versions: List[str]) -> None:
+        """Supprime les exécutions obsolètes et nettoie le pointeur actif si besoin."""
         for version in versions:
             if version:
                 self.client.delete_run(version)
@@ -389,6 +408,7 @@ class ModelService:
         optimize_metric: str,
         source: str,
     ) -> Dict[str, Any]:
+        """Journalise métadonnées/artefacts du modèle dans MLflow et renvoie l'entrée registre."""
         run = mlflow.active_run()
         if run is None:
             raise RuntimeError('No active MLflow run found while registering model.')
@@ -440,6 +460,7 @@ class ModelService:
         }
 
     def train(self, df: pd.DataFrame, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Entraîne les modèles sélectionnés, journalise les exécutions et renvoie le meilleur."""
         models = [normalize_model_name(m) for m in payload['models']]
         X, y = self._prepare_dataset(
             df=df,
@@ -513,6 +534,7 @@ class ModelService:
         }
 
     def tune(self, df: pd.DataFrame, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimise un modèle via grid/random/optuna et renvoie les meilleurs paramètres."""
         model_name = normalize_model_name(payload['model'])
         target_column = payload.get('target_column', 'target')
 
@@ -579,6 +601,7 @@ class ModelService:
         }
 
     def _suggest_optuna_params(self, model_name: str, trial):
+        """Définit les distributions de recherche Optuna selon le type de modèle."""
         if model_name == 'svm':
             return {
                 'C': trial.suggest_float('C', 1e-2, 10.0, log=True),
@@ -610,6 +633,7 @@ class ModelService:
         }
 
     def automl(self, df: pd.DataFrame, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Exécute une sélection multi-modèles rapide et ne garde actif que le gagnant."""
         candidate_models = payload.get('candidate_models') or SUPPORTED_ALGORITHMS
         candidate_models = [normalize_model_name(m) for m in candidate_models]
         optimize_metric = payload.get('optimize_metric', 'f1')
@@ -681,6 +705,7 @@ class ModelService:
         }
 
     def rollback(self, model_version: str) -> Dict[str, Any]:
+        """Active une version de modèle existante."""
         run = self.client.get_run(model_version)
         tags = run.data.tags or {}
         if not tags.get('model_name'):
@@ -690,6 +715,7 @@ class ModelService:
         return self._run_to_model_entry(run)
 
     def get_model_path(self, model_version: str) -> Path:
+        """Télécharge le chemin de l'artefact modèle exporté pour une version donnée."""
         try:
             local_path = mlflow.artifacts.download_artifacts(artifact_uri=f'runs:/{model_version}/export/model.joblib')
             path = Path(local_path)
@@ -700,6 +726,7 @@ class ModelService:
             raise FileNotFoundError(f'Unable to download model artifact for version {model_version}: {exc}')
 
     def predict(self, model_version: str, records: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Exécute l'inférence avec une version stockée sur les enregistrements fournis."""
         model_uri = f'runs:/{model_version}/model'
         pipeline = mlflow.sklearn.load_model(model_uri)
         X = pd.DataFrame(records)
@@ -719,6 +746,7 @@ class ModelService:
         }
 
     def reset_models_and_experiments(self) -> Dict[str, Any]:
+        """Supprime toutes les exécutions de modèles suivies et réinitialise l'état actif."""
         runs = self._list_model_runs()
         deleted = 0
         for run in runs:
