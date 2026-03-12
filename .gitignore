@@ -1,0 +1,71 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Frontend (Next.js / Node)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.npm/
+
+# Generated ML/EDA outputs at repo root
+histograms.png
+correlation_heatmap.png
+pairplot.png
+count_*.png
+data_quality_report.json
+data_quality_report.md
+eda_summary.txt
+
+# Local MLflow tracking artifacts
+mlruns/
+mlartifacts/
+
+# Backend runtime artifacts
+backend/storage/models/
+backend/storage/datasets/_upload_tmp*
+
+# Optional: ignore all uploaded/versioned datasets except the seeded default
+backend/storage/datasets/*.csv
+!backend/storage/datasets/heart_v1.csv

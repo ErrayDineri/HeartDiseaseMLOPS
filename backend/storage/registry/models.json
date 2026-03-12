@@ -1,0 +1,673 @@
+[
+  {
+    "version": "random_forest_20260228_014238_370192",
+    "algorithm": "random_forest",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7704918032786885,
+      "precision": 0.7878787878787878,
+      "recall": 0.7878787878787878,
+      "f1": 0.7878787878787878,
+      "roc_auc": 0.8593073593073594,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          7,
+          26
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_estimators": 200,
+      "max_depth": 8,
+      "min_samples_split": 2
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\random_forest_20260228_014238_370192.joblib",
+    "created_at": "20260228_014238_417975",
+    "experiment_id": "exp_20260228_014238_025584",
+    "is_active": false
+  },
+  {
+    "version": "random_forest_20260228_014309_399377",
+    "algorithm": "random_forest",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8032786885245902,
+      "precision": 0.8,
+      "recall": 0.8484848484848485,
+      "f1": 0.8235294117647058,
+      "roc_auc": 0.8863636363636364,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_estimators": 224,
+      "max_depth": 3,
+      "min_samples_split": 7
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\random_forest_20260228_014309_399377.joblib",
+    "created_at": "20260228_014309_449212",
+    "experiment_id": "exp_20260228_014308_970300",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014358_148169",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 11,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014358_148169.joblib",
+    "created_at": "20260228_014358_152041",
+    "experiment_id": "exp_20260228_014358_131531",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014401_817427",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 11,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014401_817427.joblib",
+    "created_at": "20260228_014401_820113",
+    "experiment_id": "exp_20260228_014401_797531",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014404_470185",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8777056277056277,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 11,
+      "weights": "uniform"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014404_470185.joblib",
+    "created_at": "20260228_014404_471937",
+    "experiment_id": "exp_20260228_014404_448814",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014407_419172",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 11,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014407_419172.joblib",
+    "created_at": "20260228_014407_423724",
+    "experiment_id": "exp_20260228_014407_401239",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014436_170620",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 11,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014436_170620.joblib",
+    "created_at": "20260228_014436_173222",
+    "experiment_id": "exp_20260228_014436_154378",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014440_121422",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8032786885245902,
+      "precision": 0.7837837837837838,
+      "recall": 0.8787878787878788,
+      "f1": 0.8285714285714286,
+      "roc_auc": 0.8744588744588744,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          4,
+          29
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 12,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014440_121422.joblib",
+    "created_at": "20260228_014440_124068",
+    "experiment_id": "exp_20260228_014440_101474",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014445_048863",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8032786885245902,
+      "precision": 0.8,
+      "recall": 0.8484848484848485,
+      "f1": 0.8235294117647058,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 13,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014445_048863.joblib",
+    "created_at": "20260228_014445_050495",
+    "experiment_id": "exp_20260228_014445_033032",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014449_556775",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.819672131147541,
+      "precision": 0.8055555555555556,
+      "recall": 0.8787878787878788,
+      "f1": 0.8405797101449275,
+      "roc_auc": 0.8858225108225108,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          4,
+          29
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 15,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014449_556775.joblib",
+    "created_at": "20260228_014449_559353",
+    "experiment_id": "exp_20260228_014449_540504",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014456_696016",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8360655737704918,
+      "precision": 0.8108108108108109,
+      "recall": 0.9090909090909091,
+      "f1": 0.8571428571428571,
+      "roc_auc": 0.8874458874458875,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          3,
+          30
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 20,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014456_696016.joblib",
+    "created_at": "20260228_014456_698845",
+    "experiment_id": "exp_20260228_014456_674710",
+    "is_active": false
+  },
+  {
+    "version": "knn_20260228_014504_055314",
+    "algorithm": "knn",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8032786885245902,
+      "precision": 0.7560975609756098,
+      "recall": 0.9393939393939394,
+      "f1": 0.8378378378378378,
+      "roc_auc": 0.8831168831168832,
+      "confusion_matrix": [
+        [
+          18,
+          10
+        ],
+        [
+          2,
+          31
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "n_neighbors": 180,
+      "weights": "distance"
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\knn_20260228_014504_055314.joblib",
+    "created_at": "20260228_014504_063896",
+    "experiment_id": "exp_20260228_014501_857276",
+    "is_active": false
+  },
+  {
+    "version": "logistic_regression_20260228_014537_283912",
+    "algorithm": "logistic_regression",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8032786885245902,
+      "precision": 0.8,
+      "recall": 0.8484848484848485,
+      "f1": 0.8235294117647058,
+      "roc_auc": 0.8712121212121212,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "C": 1,
+      "max_iter": 300
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\logistic_regression_20260228_014537_283912.joblib",
+    "created_at": "20260228_014537_287663",
+    "experiment_id": "exp_20260228_014537_253506",
+    "is_active": false
+  },
+  {
+    "version": "logistic_regression_20260228_014541_343140",
+    "algorithm": "logistic_regression",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "C": 0.1,
+      "max_iter": 300
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\logistic_regression_20260228_014541_343140.joblib",
+    "created_at": "20260228_014541_345845",
+    "experiment_id": "exp_20260228_014541_322084",
+    "is_active": false
+  },
+  {
+    "version": "logistic_regression_20260228_014544_948876",
+    "algorithm": "logistic_regression",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "C": 0.053384552259663244,
+      "max_iter": 228
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\logistic_regression_20260228_014544_948876.joblib",
+    "created_at": "20260228_014544_953231",
+    "experiment_id": "exp_20260228_014544_924589",
+    "is_active": false
+  },
+  {
+    "version": "logistic_regression_20260228_014548_007550",
+    "algorithm": "logistic_regression",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "C": 0.1,
+      "max_iter": 1000
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\logistic_regression_20260228_014548_007550.joblib",
+    "created_at": "20260228_014548_012407",
+    "experiment_id": "exp_20260228_014547_978752",
+    "is_active": false
+  },
+  {
+    "version": "logistic_regression_20260228_014550_452838",
+    "algorithm": "logistic_regression",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "C": 0.1,
+      "max_iter": 300
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\logistic_regression_20260228_014550_452838.joblib",
+    "created_at": "20260228_014550_455647",
+    "experiment_id": "exp_20260228_014550_433799",
+    "is_active": false
+  },
+  {
+    "version": "logistic_regression_20260228_014622_827803",
+    "algorithm": "logistic_regression",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7868852459016393,
+      "precision": 0.7777777777777778,
+      "recall": 0.8484848484848485,
+      "f1": 0.8115942028985508,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          5,
+          28
+        ]
+      ]
+    },
+    "hyperparameters": {
+      "solver": "lbfgs",
+      "max_iter": 1000,
+      "C": 0.1
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\logistic_regression_20260228_014622_827803.joblib",
+    "created_at": "20260228_014622_830691",
+    "experiment_id": "exp_automl_20260228_014622_749441",
+    "is_active": false
+  },
+  {
+    "version": "svm_20260228_015005_296837",
+    "algorithm": "svm",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7704918032786885,
+      "precision": 0.7714285714285715,
+      "recall": 0.8181818181818182,
+      "f1": 0.7941176470588235,
+      "roc_auc": 0.841991341991342,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          6,
+          27
+        ]
+      ],
+      "labels": [
+        0,
+        1
+      ]
+    },
+    "hyperparameters": {},
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\svm_20260228_015005_296837.joblib",
+    "created_at": "20260228_015005_298513",
+    "experiment_id": "exp_20260228_015005_282146",
+    "is_active": false
+  },
+  {
+    "version": "svm_20260228_015020_842824",
+    "algorithm": "svm",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8032786885245902,
+      "precision": 0.7837837837837838,
+      "recall": 0.8787878787878788,
+      "f1": 0.8285714285714286,
+      "roc_auc": 0.8809523809523809,
+      "confusion_matrix": [
+        [
+          20,
+          8
+        ],
+        [
+          4,
+          29
+        ]
+      ],
+      "labels": [
+        0,
+        1
+      ]
+    },
+    "hyperparameters": {
+      "kernel": "linear",
+      "gamma": "scale",
+      "C": 0.1
+    },
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\svm_20260228_015020_842824.joblib",
+    "created_at": "20260228_015020_844603",
+    "experiment_id": "exp_automl_20260228_015018_886301",
+    "is_active": false
+  },
+  {
+    "version": "random_forest_20260228_015940_099794",
+    "algorithm": "random_forest",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.7704918032786885,
+      "precision": 0.7878787878787878,
+      "recall": 0.7878787878787878,
+      "f1": 0.7878787878787878,
+      "roc_auc": 0.8679653679653679,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          7,
+          26
+        ]
+      ],
+      "labels": [
+        0,
+        1
+      ]
+    },
+    "hyperparameters": {},
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\random_forest_20260228_015940_099794.joblib",
+    "created_at": "20260228_015940_125200",
+    "experiment_id": "exp_20260228_015939_870639",
+    "is_active": false
+  },
+  {
+    "version": "logistic_regression_20260228_015940_136445",
+    "algorithm": "logistic_regression",
+    "dataset_version": "heart_v1",
+    "metrics": {
+      "accuracy": 0.8032786885245902,
+      "precision": 0.8,
+      "recall": 0.8484848484848485,
+      "f1": 0.8235294117647058,
+      "roc_auc": 0.8712121212121212,
+      "confusion_matrix": [
+        [
+          21,
+          7
+        ],
+        [
+          5,
+          28
+        ]
+      ],
+      "labels": [
+        0,
+        1
+      ]
+    },
+    "hyperparameters": {},
+    "file_path": "C:\\Users\\guerm\\OneDrive\\Documents\\Courses\\ING4DSA\\MLAvancé\\HeartDisease\\backend\\storage\\models\\logistic_regression_20260228_015940_136445.joblib",
+    "created_at": "20260228_015940_137799",
+    "experiment_id": "exp_20260228_015939_870639",
+    "is_active": true
+  }
+]
