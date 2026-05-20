@@ -32,4 +32,4 @@ A platform for:
 ### Backend
 - API for dataset management, training, tuning, and AutoML
 - MLflow integration for experiment tracking
-- Supported algorithms: SVM, Random Forest, KNN, Logistic Regression, Neural Network
+- Supported algorithms: SVM, Random Forest, AdaBoost, XGBoost, KNN, Logistic Regression, Neural Network

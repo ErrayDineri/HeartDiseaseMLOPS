@@ -2,7 +2,7 @@
 
 FastAPI backend for:
 - Dataset management (upload, preview, cleaning, versioning)
-- Multi-model training (SVM, RF, KNN, Logistic Regression, NN)
+- Multi-model training (SVM, RF, AdaBoost, XGBoost, KNN, Logistic Regression, NN)
 - Hyperparameter tuning (GridSearch, RandomSearch, Optuna)
 - AutoML and best model selection
 - MLOps tracking (experiments, model versions, rollback)

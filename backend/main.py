@@ -39,6 +39,8 @@ def algorithms():
         'docs': {
             'svm': 'Frontière non linéaire efficace avec noyau',
             'random_forest': 'Ensemble d’arbres robuste',
+            'adaboost': 'Boosting adaptatif, souvent performant sur données tabulaires',
+            'xgboost': 'Gradient boosting optimisé, puissant sur données tabulaires',
             'knn': 'Méthode par voisinage',
             'logistic_regression': 'Baseline linéaire interprétable',
             'neural_network': 'MLP flexible pour patterns complexes',

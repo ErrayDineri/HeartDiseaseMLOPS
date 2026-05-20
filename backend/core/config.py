@@ -21,6 +21,8 @@ DEFAULT_DATASET_VERSION = 'heart_v1'
 SUPPORTED_ALGORITHMS = [
     'svm',
     'random_forest',
+    'adaboost',
+    'xgboost',
     'knn',
     'logistic_regression',
     'neural_network',

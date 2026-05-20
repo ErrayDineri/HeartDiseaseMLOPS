@@ -25,6 +25,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 const MODEL_KEY_TO_BACKEND = {
   svm: 'svm',
   rf: 'random_forest',
+  ada: 'adaboost',
+  xgb: 'xgboost',
   knn: 'knn',
   logreg: 'logistic_regression',
   nn: 'neural_network'
@@ -38,6 +40,8 @@ const BACKEND_TO_MODEL_KEY = Object.fromEntries(
 const ALGORITHMS = [
   { key: 'svm', label: 'SVM', doc: 'Bon pour des frontières complexes, nécessite un tuning de C et gamma.' },
   { key: 'rf', label: 'Random Forest', doc: 'Ensemble d’arbres robuste, performant avec peu de prétraitement.' },
+  { key: 'ada', label: 'AdaBoost', doc: 'Boosting adaptatif rapide, efficace sur données tabulaires.' },
+  { key: 'xgb', label: 'XGBoost', doc: 'Gradient boosting optimisé, performant sur données tabulaires.' },
   { key: 'knn', label: 'KNN', doc: 'Simple et efficace sur petits jeux de données bien normalisés.' },
   { key: 'logreg', label: 'Logistic Regression', doc: 'Baseline interprétable pour classification binaire.' },
   { key: 'nn', label: 'Neural Network', doc: 'Flexible mais demande plus de données et d’ajustements.' }
@@ -46,6 +50,8 @@ const ALGORITHMS = [
 const DEFAULT_PARAMS = {
   svm: { C: 1, gamma: 0.1, kernel: 'rbf' },
   rf: { n_estimators: 200, max_depth: 8, min_samples_split: 2 },
+  ada: { n_estimators: 200, learning_rate: 0.5 },
+  xgb: { n_estimators: 200, max_depth: 6, learning_rate: 0.1, subsample: 0.9, colsample_bytree: 0.9 },
   knn: { k: 5, weights: 'uniform' },
   logreg: { C: 1, max_iter: 300 },
   nn: { learning_rate: 0.001, epochs: 40, layers: '64-32' }
@@ -288,6 +294,25 @@ export default function Page() {
         };
       }
 
+      if (modelKey === 'ada') {
+        updated.ada = {
+          ...updated.ada,
+          ...(clean.n_estimators !== undefined ? { n_estimators: clean.n_estimators } : {}),
+          ...(clean.learning_rate !== undefined ? { learning_rate: clean.learning_rate } : {})
+        };
+      }
+
+      if (modelKey === 'xgb') {
+        updated.xgb = {
+          ...updated.xgb,
+          ...(clean.n_estimators !== undefined ? { n_estimators: clean.n_estimators } : {}),
+          ...(clean.max_depth !== undefined ? { max_depth: clean.max_depth ?? '' } : {}),
+          ...(clean.learning_rate !== undefined ? { learning_rate: clean.learning_rate } : {}),
+          ...(clean.subsample !== undefined ? { subsample: clean.subsample } : {}),
+          ...(clean.colsample_bytree !== undefined ? { colsample_bytree: clean.colsample_bytree } : {})
+        };
+      }
+
       if (modelKey === 'knn') {
         updated.knn = {
           ...updated.knn,
@@ -351,6 +376,26 @@ export default function Page() {
         n_estimators: toPositiveInt(params.rf.n_estimators, 200, 10),
         max_depth: Number.isNaN(rfDepthNormalized) ? null : rfDepthNormalized,
         min_samples_split: toPositiveInt(params.rf.min_samples_split, 2, 2)
+      };
+    }
+    if (selectedModels.includes('ada')) {
+      mapped.adaboost = {
+        n_estimators: toPositiveInt(params.ada.n_estimators, 200, 10),
+        learning_rate: toPositiveNumber(params.ada.learning_rate, 0.5, 0.0001)
+      };
+    }
+    if (selectedModels.includes('xgb')) {
+      const depthRaw = params.xgb.max_depth;
+      const depthNormalized =
+        depthRaw === '' || String(depthRaw).toLowerCase() === 'none' || depthRaw == null
+          ? null
+          : toPositiveInt(depthRaw, 6, 1);
+      mapped.xgboost = {
+        n_estimators: toPositiveInt(params.xgb.n_estimators, 200, 10),
+        max_depth: Number.isNaN(depthNormalized) ? null : depthNormalized,
+        learning_rate: toPositiveNumber(params.xgb.learning_rate, 0.1, 0.0001),
+        subsample: toPositiveNumber(params.xgb.subsample, 0.9, 0.1),
+        colsample_bytree: toPositiveNumber(params.xgb.colsample_bytree, 0.9, 0.1)
       };
     }
     if (selectedModels.includes('knn')) {

@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from mlflow.tracking import MlflowClient
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -43,11 +43,21 @@ try:
 except Exception:
     optuna = None
 
+try:
+    from xgboost import XGBClassifier
+except Exception:
+    XGBClassifier = None
+
 
 ALIAS = {
     'rf': 'random_forest',
     'randomforest': 'random_forest',
     'random_forest': 'random_forest',
+    'ada': 'adaboost',
+    'ada_boost': 'adaboost',
+    'adaboost': 'adaboost',
+    'xgb': 'xgboost',
+    'xgboost': 'xgboost',
     'logreg': 'logistic_regression',
     'logistic': 'logistic_regression',
     'logistic_regression': 'logistic_regression',
@@ -74,6 +84,16 @@ def default_search_space(model_name: str) -> Dict[str, Any]:
         return {'estimator__C': [0.1, 1, 10], 'estimator__gamma': ['scale', 0.1, 0.01], 'estimator__kernel': ['rbf', 'linear']}
     if model_name == 'random_forest':
         return {'estimator__n_estimators': [100, 200, 300], 'estimator__max_depth': [5, 10, 20], 'estimator__min_samples_split': [2, 5]}
+    if model_name == 'adaboost':
+        return {'estimator__n_estimators': [50, 150, 300], 'estimator__learning_rate': [0.05, 0.1, 0.5, 1.0]}
+    if model_name == 'xgboost':
+        return {
+            'estimator__n_estimators': [100, 200, 300],
+            'estimator__max_depth': [3, 6, 9],
+            'estimator__learning_rate': [0.03, 0.1, 0.2],
+            'estimator__subsample': [0.8, 0.9, 1.0],
+            'estimator__colsample_bytree': [0.8, 0.9, 1.0],
+        }
     if model_name == 'knn':
         return {'estimator__n_neighbors': [3, 5, 7, 11], 'estimator__weights': ['uniform', 'distance']}
     if model_name == 'logistic_regression':
@@ -219,6 +239,26 @@ class ModelService:
             defaults = {'n_estimators': 200, 'max_depth': 8, 'min_samples_split': 2, 'random_state': 42, 'n_jobs': -1}
             defaults.update(params)
             return RandomForestClassifier(**defaults)
+        if model_name == 'adaboost':
+            defaults = {'n_estimators': 200, 'learning_rate': 0.5, 'random_state': 42}
+            defaults.update(params)
+            return AdaBoostClassifier(**defaults)
+        if model_name == 'xgboost':
+            if XGBClassifier is None:
+                raise RuntimeError('xgboost is not installed in the environment.')
+            defaults = {
+                'n_estimators': 200,
+                'max_depth': 6,
+                'learning_rate': 0.1,
+                'subsample': 0.9,
+                'colsample_bytree': 0.9,
+                'objective': 'binary:logistic',
+                'eval_metric': 'logloss',
+                'random_state': 42,
+                'n_jobs': -1,
+            }
+            defaults.update(params)
+            return XGBClassifier(**defaults)
         if model_name == 'knn':
             defaults = {'n_neighbors': 5, 'weights': 'uniform'}
             defaults.update(params)
@@ -613,6 +653,19 @@ class ModelService:
                 'n_estimators': trial.suggest_int('n_estimators', 80, 300),
                 'max_depth': trial.suggest_int('max_depth', 3, 20),
                 'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
+            }
+        if model_name == 'adaboost':
+            return {
+                'n_estimators': trial.suggest_int('n_estimators', 50, 400),
+                'learning_rate': trial.suggest_float('learning_rate', 0.01, 1.0, log=True),
+            }
+        if model_name == 'xgboost':
+            return {
+                'n_estimators': trial.suggest_int('n_estimators', 100, 400),
+                'max_depth': trial.suggest_int('max_depth', 3, 10),
+                'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
+                'subsample': trial.suggest_float('subsample', 0.7, 1.0),
+                'colsample_bytree': trial.suggest_float('colsample_bytree', 0.7, 1.0),
             }
         if model_name == 'knn':
             return {
